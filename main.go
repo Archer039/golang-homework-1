@@ -2,95 +2,129 @@ package main
 
 import "fmt"
 
+const (
+	USD = "USD"
+	EUR = "EUR"
+	RUB = "RUB"
+)
+
 func main() {
-	fromCurrency, toCurrency, value := getUserValue()
+	fromCurrency := inputSourceCurrency()
+	value := inputAmount()
+	toCurrency := inputTargetCurrency(fromCurrency)
+
 	result := getConvertedValue(value, fromCurrency, toCurrency)
 
 	fmt.Println(result)
 }
 
-func getUserValue() (string, string, float64) {
-	var fromCurrency, toCurrency string
-	var value float64
-
+func inputSourceCurrency() string {
 	for {
 		fmt.Println("Выберите начальную валюту (USD, EUR, RUB)")
-		fmt.Scan(&fromCurrency)
 
-		if fromCurrency == "USD" || fromCurrency == "EUR" || fromCurrency == "RUB" {
-			break
+		currency := readCurrency()
+		if isValidCurrency(currency) {
+			return currency
 		}
 
 		fmt.Println("Выбранной валюты не существует в программе, введите ещё раз!")
 	}
+}
 
-	for {
-		fmt.Println("Введите сумму: ")
-		_, err := fmt.Scan(&value)
-		if err != nil {
-			fmt.Println("Введите корректное число!")
-			continue
-		}
-		break
-	}
-
+func inputTargetCurrency(fromCurrency string) string {
 	for {
 		fmt.Println("Выберите конечную валюту " + getAvailableCurrenciesHint(fromCurrency))
-		fmt.Scan(&toCurrency)
 
-		if fromCurrency == toCurrency {
-			fmt.Println("Эта валюта уже выбранна как начальная, выберите другую")
+		currency := readCurrency()
+
+		if !isValidCurrency(currency) {
+			fmt.Println("Выбранной валюты не существует в программе, введите ещё раз!")
 			continue
 		}
 
-		if toCurrency == "USD" || toCurrency == "EUR" || toCurrency == "RUB" {
-			break
+		if currency == fromCurrency {
+			fmt.Println("Эта валюта уже выбрана как начальная, выберите другую")
+			continue
 		}
+
+		return currency
+	}
+}
+
+func inputAmount() float64 {
+	for {
+		fmt.Println("Введите сумму:")
+
+		value, ok := readNumber()
+		if ok {
+			return value
+		}
+
+		fmt.Println("Введите корректное число!")
+		clearInputBuffer()
+	}
+}
+
+func readCurrency() string {
+	var currency string
+	fmt.Scan(&currency)
+	return currency
+}
+
+func readNumber() (float64, bool) {
+	var value float64
+	_, err := fmt.Scan(&value)
+
+	if err != nil {
+		return 0, false
 	}
 
-	return fromCurrency, toCurrency, value
+	return value, true
+}
+
+func clearInputBuffer() {
+	var trash string
+	fmt.Scanln(&trash)
+}
+
+func isValidCurrency(currency string) bool {
+	return currency == USD || currency == EUR || currency == RUB
 }
 
 func getConvertedValue(value float64, fromCurrency string, toCurrency string) float64 {
-	const UsdToEur float64 = 0.93
-	const UsdToRub float64 = 87.34
-	const EurToRub float64 = UsdToRub / UsdToEur
+	const usdToEur float64 = 0.93
+	const usdToRub float64 = 87.34
+	const eurToRub float64 = usdToRub / usdToEur
 
 	var result float64
 
 	switch {
-	case fromCurrency == "USD" && toCurrency == "EUR":
-		result = value * UsdToEur
-	case fromCurrency == "EUR" && toCurrency == "USD":
-		result = value / UsdToEur
-	case fromCurrency == "EUR" && toCurrency == "RUB":
-		result = value * EurToRub
-	case fromCurrency == "RUB" && toCurrency == "EUR":
-		result = value / EurToRub
-	case fromCurrency == "USD" && toCurrency == "RUB":
-		result = value * UsdToRub
-	case fromCurrency == "RUB" && toCurrency == "USD":
-		result = value / UsdToRub
+	case fromCurrency == USD && toCurrency == EUR:
+		result = value * usdToEur
+	case fromCurrency == EUR && toCurrency == USD:
+		result = value / usdToEur
+	case fromCurrency == EUR && toCurrency == RUB:
+		result = value * eurToRub
+	case fromCurrency == RUB && toCurrency == EUR:
+		result = value / eurToRub
+	case fromCurrency == USD && toCurrency == RUB:
+		result = value * usdToRub
+	case fromCurrency == RUB && toCurrency == USD:
+		result = value / usdToRub
 	}
 
 	return result
 }
 
 func getAvailableCurrenciesHint(selectedCurrency string) string {
-	const USD string = "USD"
-	const EUR string = "EUR"
-	const RUB string = "RUB"
-
-	var hint string
-
 	switch selectedCurrency {
 	case USD:
-		hint = "(EUR, RUB)"
+		return "(EUR, RUB)"
 	case EUR:
-		hint = "(USD, RUB)"
+		return "(USD, RUB)"
 	case RUB:
-		hint = "(USD, EUR)"
+		return "(USD, EUR)"
 	}
 
-	return hint
+	return ""
 }
