@@ -94,26 +94,23 @@ func isValidCurrency(currency string) bool {
 func getConvertedValue(value float64, fromCurrency string, toCurrency string) float64 {
 	const usdToEur float64 = 0.93
 	const usdToRub float64 = 87.34
-	const eurToRub float64 = usdToRub / usdToEur
 
-	var result float64
-
-	switch {
-	case fromCurrency == USD && toCurrency == EUR:
-		result = value * usdToEur
-	case fromCurrency == EUR && toCurrency == USD:
-		result = value / usdToEur
-	case fromCurrency == EUR && toCurrency == RUB:
-		result = value * eurToRub
-	case fromCurrency == RUB && toCurrency == EUR:
-		result = value / eurToRub
-	case fromCurrency == USD && toCurrency == RUB:
-		result = value * usdToRub
-	case fromCurrency == RUB && toCurrency == USD:
-		result = value / usdToRub
+	currencyRates := map[string]map[string]float64{
+		USD: {
+			EUR: usdToEur,
+			RUB: usdToRub,
+		},
+		EUR: {
+			USD: 1 / usdToEur,
+			RUB: usdToRub / usdToEur,
+		},
+		RUB: {
+			USD: 1 / usdToRub,
+			EUR: usdToEur / usdToRub,
+		},
 	}
 
-	return result
+	return value * currencyRates[fromCurrency][toCurrency]
 }
 
 func getAvailableCurrenciesHint(selectedCurrency string) string {
